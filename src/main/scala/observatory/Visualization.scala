@@ -31,7 +31,7 @@ object Visualization extends VisualizationInterface:
       case Some(value) => value._2
       case None => 
         val (a, b) = distsTempratures.foldLeft((0.0, 0.0))((acc, dt) => {
-          val w = 1 / pow(dt._1, 6)
+          val w = 1.0 / pow(dt._1, 6)
           (acc._1 + w * dt._2, acc._2 + w)
         })
         a / b
