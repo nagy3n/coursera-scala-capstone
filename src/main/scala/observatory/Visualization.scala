@@ -63,8 +63,8 @@ object Visualization extends VisualizationInterface:
     */
   def visualize(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)]): ImmutableImage =
     val pixels = (for {
-      x <- 0 until 360
       y <- 0 until 180
+      x <- 0 until 360
     } yield {
         (x, y, interpolateColor(
                 colors, 

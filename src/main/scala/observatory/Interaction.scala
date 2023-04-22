@@ -32,8 +32,8 @@ object Interaction extends InteractionInterface:
     val (nw, se) = (tileLocation(tile), tileLocation(Tile(tile.x + 1, tile.y + 1, tile.zoom)))
     val (diffLon, diffLat) = ((se.lon - nw.lon) / 256, (nw.lat - se.lat) / 256)
     val pixels = (for {
-      i <- 0 until 256
       j <- 0 until 256
+      i <- 0 until 256
     } yield {
       (i, j, Visualization.interpolateColor(
               colors, 
