@@ -16,8 +16,8 @@ object Interaction extends InteractionInterface:
     */
   def tileLocation(tile: Tile): Location =
     val n = math.pow(2, tile.zoom)
-    val lon_deg = tile.x / n * 360.0 - 180.0
-    val lat_rad = math.atan(math.sinh(math.Pi * (1 - 2 * tile.y / n)))
+    val lon_deg = (tile.x * 360.0) / n - 180.0
+    val lat_rad = math.atan(math.sinh(math.Pi * (1 - (2 * tile.y) / n)))
     val lat_deg = math.toDegrees(lat_rad)
     Location(lat_deg, lon_deg)
 
@@ -29,15 +29,14 @@ object Interaction extends InteractionInterface:
     * @return A 256×256 image showing the contents of the given tile
     */
   def tile(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)], tile: Tile): ImmutableImage =
-    val (nw, se) = (tileLocation(tile), tileLocation(Tile(tile.x + 1, tile.y + 1, tile.zoom)))
-    val (diffLon, diffLat) = ((se.lon - nw.lon) / 256, (nw.lat - se.lat) / 256)
+    val (diffX, diffY) = ((tile.x * math.pow(2, 8)).toInt, (tile.y * math.pow(2, 8)).toInt)
     val pixels = (for {
-      j <- 0 until 256
+      j <- (0 until 256).par
       i <- 0 until 256
     } yield {
       (i, j, Visualization.interpolateColor(
               colors, 
-              Visualization.predictTemperature(temperatures, Location(nw.lat + diffLat * j, nw.lon + diffLon * i))
+              Visualization.predictTemperature(temperatures, tileLocation(Tile(i + diffX, j + diffY, 8 + tile.zoom)))
               )
       )
     }).map((x, y, color) => Pixel(x, y, color.red, color.green, color.blue, 255))
@@ -57,5 +56,10 @@ object Interaction extends InteractionInterface:
     yearlyData: Iterable[(Year, Data)],
     generateImage: (Year, Tile, Data) => Unit
   ): Unit =
-    ???
+    for {
+      zoom <- 0 to 3
+      y <- 0 until math.pow(2, zoom).toInt
+      x <- 0 until math.pow(2, zoom).toInt
+      (year, data) <- yearlyData
+    } yield generateImage(year, Tile(x, y, zoom), data)
 
