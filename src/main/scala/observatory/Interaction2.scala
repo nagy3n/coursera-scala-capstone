@@ -9,14 +9,41 @@ object Interaction2 extends Interaction2Interface:
     * @return The available layers of the application
     */
   def availableLayers: Seq[Layer] =
-    ???
+    Seq(
+      Layer(
+        LayerName.Temperatures,
+        Seq(
+          (60.0, Color(255, 255, 255)),
+          (32.0, Color(255, 0, 0)),
+          (12.0, Color(255, 255, 0)),
+          (0.0, Color(0, 255, 255)),
+          (-15.0, Color(0, 0, 255)),
+          (-27.0, Color(255, 0, 255)),
+          (-50.0, Color(33, 0, 107)),
+          (-60.0, Color(0, 0, 0))
+        ),
+        1975 to 2015
+      ),
+      Layer(
+        LayerName.Deviations,
+        Seq(
+          (7.0, Color(0, 0, 0)),
+          (4.0, Color(255, 0, 0)),
+          (2.0, Color(255, 255, 0)),
+          (0.0, Color(255, 255, 255)),
+          (-2.0, Color(0, 255, 255)),
+          (-7.0, Color(0, 0, 255))
+        ),
+        1975 to 2015
+      )
+    )
 
   /**
     * @param selectedLayer A signal carrying the layer selected by the user
     * @return A signal containing the year bounds corresponding to the selected layer
     */
   def yearBounds(selectedLayer: Signal[Layer]): Signal[Range] =
-    ???
+    Signal(selectedLayer().bounds)
 
   /**
     * @param selectedLayer The selected layer
@@ -27,7 +54,12 @@ object Interaction2 extends Interaction2Interface:
     *         in the `selectedLayer` bounds.
     */
   def yearSelection(selectedLayer: Signal[Layer], sliderValue: Signal[Year]): Signal[Year] =
-    ???
+    Signal{
+      val bounds = selectedLayer().bounds
+      val currentSliderValue = sliderValue()
+      if(bounds.contains(currentSliderValue)) currentSliderValue
+      else bounds.head
+    }
 
   /**
     * @param selectedLayer The selected layer
@@ -35,7 +67,7 @@ object Interaction2 extends Interaction2Interface:
     * @return The URL pattern to retrieve tiles
     */
   def layerUrlPattern(selectedLayer: Signal[Layer], selectedYear: Signal[Year]): Signal[String] =
-    ???
+    Signal(s"target/${selectedLayer().layerName.id}/${selectedYear()}/{z}/{x}-{y}.png")
 
   /**
     * @param selectedLayer The selected layer
@@ -43,7 +75,7 @@ object Interaction2 extends Interaction2Interface:
     * @return The caption to show
     */
   def caption(selectedLayer: Signal[Layer], selectedYear: Signal[Year]): Signal[String] =
-    ???
+    Signal(s"${selectedLayer().layerName.id.capitalize} (${selectedYear()})")
 
 
 // Interface used by the grading infrastructure. Do not change signatures
