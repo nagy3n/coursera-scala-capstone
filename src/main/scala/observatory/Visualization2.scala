@@ -3,6 +3,7 @@ package observatory
 import com.sksamuel.scrimage.ImmutableImage
 import com.sksamuel.scrimage.pixels.Pixel
 import com.sksamuel.scrimage.metadata.ImageMetadata
+import scala.collection.parallel.CollectionConverters.given
 
 /**
   * 5th milestone: value-added information visualization
@@ -25,7 +26,7 @@ object Visualization2 extends Visualization2Interface:
     d10: Temperature,
     d11: Temperature
   ): Temperature =
-    ???
+    d00 * (1 - point.x) * (1 - point.y) + d01 * (1 - point.x) * point.y + d10 * point.x * (1 - point.y) + d11 * point.x * point.y
 
   /**
     * @param grid Grid to visualize
@@ -38,5 +39,29 @@ object Visualization2 extends Visualization2Interface:
     colors: Iterable[(Temperature, Color)],
     tile: Tile
   ): ImmutableImage =
-    ???
+    val (diffX, diffY) = ((tile.x * math.pow(2, 8)).toInt, (tile.y * math.pow(2, 8)).toInt)
+    val pixels = (for {
+      j <- (0 until 256).par
+      i <- 0 until 256
+    } yield {
+      val location = Interaction.tileLocation(Tile(i + diffX, j + diffY, 8 + tile.zoom))
+
+      val (lat0, lat1) = (math.floor(location.lat).toInt, math.ceil(location.lat).toInt)
+      val (lon0, lon1) = (math.floor(location.lon).toInt, math.ceil(location.lon).toInt)
+      val cellPoint = CellPoint(location.lon - lon0, lat1 - location.lat)
+      val (d00, d01, d10, d11) = (
+        grid(GridLocation(lat1, lon0)),
+        grid(GridLocation(lat0, lon0)),
+        grid(GridLocation(lat1, lon1)),
+        grid(GridLocation(lat0, lon1))
+      )
+
+      (i, j, Visualization.interpolateColor(
+              colors, 
+              bilinearInterpolation(cellPoint, d00, d01, d10, d11)
+            )
+      )
+    }).map((x, y, color) => Pixel(x, y, color.red, color.green, color.blue, 255))
+
+    ImmutableImage.wrapPixels(256, 256, pixels.toArray, ImageMetadata.empty)
 
